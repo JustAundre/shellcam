@@ -19,7 +19,7 @@ chmod 640 /var/log/sessions
 	printf '%s\n%s' '# Run shellcam script as root w/o' 'ALL ALL=(ALL) SETENV: NOPASSWD: /opt/shellcam/main.sh'
 	printf '%s\n\t%s' '# Allow passthrough of SSH_* variables to programs ran via sudo for better forensics.' 'Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"'
 	printf '%s\n%s' '# Force all users into terminal logger' 'ForceCommand sudo /opt/shellcam/main.sh'
-} >> /etc/sudoers
+} >>/etc/sudoers
 #
 # Restart SSH(D)
 systemctl restart sshd || systemctl restart ssh
