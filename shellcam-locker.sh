@@ -32,14 +32,14 @@ for file in "${log_dir}"/*; do
 	# Check if this specific file is in our list (or is being prepared for logging)
 	if
 		grep -qx "${file}" <<<"${is_open}" ||
-		[[ "$(stat -c %s "${file}")" == 0 ]]
-	#
-	# File is actively being logged to
-	# Add append-only (+a)
-	then chattr +a "${file}" && echo "Made append-only: ${file}"
-	#
-	# File is idle/finished
-	# Remove append-only (-a) & set immutable (+i)
-	else chattr -a +i "${file}" && echo "Made immutable: ${file}"
+		[[ "$(stat -c %s "${file}")" == 0 ]];
+	then
+		# File is actively being logged to
+		# Add append-only (+a)
+		chattr +a "${file}" && echo "Made append-only: ${file@Q}"
+	else
+		# File is idle/finished
+		# Remove append-only (-a) & set immutable (+i)
+		chattr -a +i "${file}" && echo "Made immutable: ${file@Q}"
 	fi
 done
