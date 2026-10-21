@@ -8,9 +8,9 @@
 # Register Shellcam
 #
 # Create the logging directory
-mkdir -p /var/log/sessions
-chown 0:0 /var/log/sessions
-chmod 640 /var/log/sessions
+mkdir -pv /var/log/sessions
+chown -c 0:0 /var/log/sessions
+chmod -c 640 /var/log/sessions
 #
 # Allow shellcam to be ran as root by all users without a password (needed to send log to secure locations, users are lowered to their original users/privileges)
 # Allow passing of necessary variables through sudo
