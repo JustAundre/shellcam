@@ -7,11 +7,14 @@
 #
 # Environment Setup
 #
+bullsh_exec='/opt/bullsh/main.sh'
+USER="$(id -nu)"
+HOME="$(getent passwd "${USER}" | cut -d: -f6)"
 count=0
-HOME="$(getent passwd "$(id -nu)" | cut -d: -f6)"
-while [[ -f ${log_file} || -z ${log_file} ]]; do
+log_file="/var/log/sessions/${USER}-${count}.log"
+while [[ -f ${log_file} ]]; do
 	((count++))
-	log_file="/var/log/sessions/${LOGNAME}-${count}.log"
+	log_file="/var/log/sessions/${USER}-${count}.log"
 done
 
 
@@ -24,24 +27,22 @@ done
 # Stop & log non-interactive sessions
 if [[ ! -t 0 ]]; then
 	# ...plus any commands
-	[[ -n ${SSH_ORIGINAL_COMMAND} ]] && cmd="with command ${SSH_ORIGINAL_COMMAND}"
-	systemd-cat -p3 -t sshd <<< "${LOGNAME}/${UID} from ${SSH_CLIENT} attempted to run non-interactive command: (${cmd})"
+	systemd-cat -p3 -t sshd <<< "${USER}/${UID}@${SSH_CLIENT@Q} attempted non-interactive command: ${SSH_ORIGINAL_COMMAND@Q}"
 	exit 255
 fi
 #
 # Start logging
-[[ -x /opt/bullsh/bull.sh ]] &&
-	exec -c env -i\
-		TERM="${TERM}"\
-		SSH_CLIENT="${SSH_CLIENT}"\
-		SSH_CONNECTION="${SSH_CONNECTION}"\
-		SSH_TTY="${SSH_TTY}"\
-		SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}"\
-		-- /usr/bin/script "${log_file}" -afqc "su -p $(id -nu) -s /bin/bash -lc /opt/bullsh/bull.sh"
-exec -c env -i\
-	TERM="${TERM}"\
-	SSH_CLIENT="${SSH_CLIENT}"\
-	SSH_CONNECTION="${SSH_CONNECTION}"\
-	SSH_TTY="${SSH_TTY}"\
-	SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}"\
-	-- /usr/bin/script "${log_file}" -afqc "su -p $(id -nu) -s /bin/bash -l"
+cmd=(
+	exec -c -- env -i --
+	TERM="${TERM}"
+	SSH_CLIENT="${SSH_CLIENT}"
+	SSH_CONNECTION="${SSH_CONNECTION}"
+	SSH_TTY="${SSH_TTY}"
+	SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}"
+)
+if [[ -x ${bullsh_exec} ]]; then
+	cmd+=(/usr/bin/script -afqc "su -p ${SUDO_USER} -s /bin/bash -lc ${bullsh_exec}" -- "${log_file}")
+else
+	cmd+=(/usr/bin/script -afqc "su -p ${SUDO_USER} -s /bin/bash -l" -- "${log_file}")
+fi
+"${cmd[@]}"
