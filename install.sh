@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#
+# Environment Setup
+#
+cd "${0##*/}" || exit 1
 
 
 
@@ -8,20 +12,14 @@
 # Register Shellcam
 #
 # Create the logging directory
-mkdir -pv /var/log/sessions
+mkdir -v -p /var/log/sessions
 chown -c 0:0 /var/log/sessions
 chmod -c 640 /var/log/sessions
 #
-# Allow shellcam to be ran as root by all users without a password (needed to send log to secure locations, users are lowered to their original users/privileges)
-# Allow passing of necessary variables through sudo
-# Register shellcam in a ForceCommand directive
-{
-	printf '%s\n%s' '# Run shellcam script as root w/o' 'ALL ALL=(ALL) SETENV: NOPASSWD: /opt/shellcam/main.sh'
-	printf '%s\n\t%s' '# Allow passthrough of SSH_* variables to programs ran via sudo for better forensics.' 'Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"'
-	printf '%s\n%s' '# Force all users into terminal logger' 'ForceCommand sudo /opt/shellcam/main.sh'
-} >>/etc/sudoers
-#
-# Restart SSH(D)
+# Patch SSHD configuration and sudoers file, then restart SSHD.
+visudo -cf cnf/sudoers || exit 1
+install -m 440 -o 0 -g 0 -D -v cnf/sudoers /etc/sudoers.d/shellcam
+cat cnf/sshd_config >>/etc/ssh/sshd_config
 systemctl restart sshd || systemctl restart ssh
 
 
@@ -29,12 +27,11 @@ systemctl restart sshd || systemctl restart ssh
 
 
 #
-# Protect Shellcam Logs
+# Enroll Log Protection Service
 #
 # Install monitor service
-cd "$(dirname "${0}")" || exit 1
-ln -v sc-monitor.service /etc/systemd/system/sc-monitor.service
-ln -v sc-monitor.path /etc/systemd/system/sc-monitor.path
+install -v -m 600 -o 0 -g 0 ./sc-log-locker/service.service /etc/systemd/system/shellcam-monitor.service
+install -v -m 600 -o 0 -g 0 ./sc-log-locker/service.path /etc/systemd/system/shellcam-monitor.path
 #
 # Register and enable monitor service
 systemctl daemon-reload

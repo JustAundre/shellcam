@@ -1,0 +1,5 @@
+# Run shellcam script as root w/o password
+ALL ALL=(ALL) SETENV: NOPASSWD: /opt/shellcam/main.sh
+
+# Allow passthrough of SSH_* variables to programs ran via sudo for more forensic data.
+Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"
