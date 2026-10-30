@@ -8,8 +8,8 @@
 # Environment Setup
 #
 bullsh_exec='/opt/bullsh/main.sh'
-USER="$(id -nu)"
-HOME="$(getent passwd "${USER}" | cut -d: -f6)"
+USER="$(id -n -u)"
+HOME="$(getent passwd "${USER}" | cut -d ':' -f 6)"
 count=0
 log_file="/var/log/sessions/${USER}-${count}.log"
 while [[ -f ${log_file} ]]; do
@@ -27,7 +27,7 @@ done
 # Stop & log non-interactive sessions
 if [[ ! -t 0 ]]; then
 	# ...plus any commands
-	systemd-cat -p3 -t sshd <<< "${USER}/${UID}@${SSH_CLIENT@Q} attempted non-interactive command: ${SSH_ORIGINAL_COMMAND@Q}"
+	systemd-cat -p 3 -t sshd <<< "${USER}/${UID}@${SSH_CLIENT@Q} attempted non-interactive command: ${SSH_ORIGINAL_COMMAND@Q}"
 	exit 255
 fi
 #
@@ -41,8 +41,8 @@ cmd=(
 	SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}"
 )
 if [[ -x ${bullsh_exec} ]]; then
-	cmd+=(/usr/bin/script -afqc "su -p ${SUDO_USER} -s /bin/bash -lc ${bullsh_exec}" -- "${log_file}")
+	cmd+=(/usr/bin/script -a -f -q -c "su -p ${SUDO_USER} -s /bin/bash -l -c ${bullsh_exec}" -- "${log_file}")
 else
-	cmd+=(/usr/bin/script -afqc "su -p ${SUDO_USER} -s /bin/bash -l" -- "${log_file}")
+	cmd+=(/usr/bin/script -a -f -q -c "su -p ${SUDO_USER} -s /bin/bash -l" -- "${log_file}")
 fi
 "${cmd[@]}"

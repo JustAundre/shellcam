@@ -9,7 +9,7 @@
 #
 log_dir='/var/log/sessions'
 declare -A open_logs
-while read -rd '' path; do
+while read -r -d '' path; do
 	[[ -f ${path} ]] || continue
 	open_logs["${path}"]=1
 done < <(

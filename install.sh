@@ -17,7 +17,7 @@ chown -c 0:0 /var/log/sessions
 chmod -c 640 /var/log/sessions
 #
 # Patch SSHD configuration and sudoers file, then restart SSHD.
-visudo -cf cnf/sudoers || exit 1
+visudo -c -f cnf/sudoers || exit 1
 install -m 440 -o 0 -g 0 -D -v cnf/sudoers /etc/sudoers.d/shellcam
 cat cnf/sshd_config >>/etc/ssh/sshd_config
 systemctl restart sshd || systemctl restart ssh
