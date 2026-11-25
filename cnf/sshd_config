@@ -1,2 +1,0 @@
-# Force all users into terminal logger
-ForceCommand sudo /opt/shellcam/main.sh
